@@ -96,7 +96,7 @@ app.put('/api/notes/:id', (req, res) => {
 
 })
 
-const PORT = 3002;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Running on port ${PORT}`);
 })
