@@ -1,10 +1,17 @@
 const express = require('express');
-const cors = require('cors');
 const app = express();
+const http = require('http').Server(app);
+const io = require("socket.io")(http, {
+  cors: {
+    origin: "http://localhost:3000"
+  }
+});
+const cors = require('cors');
 
 app.use(express.static('dist'));
 app.use(express.json());
 app.use(cors());
+
 
 
 let notes = [
@@ -52,13 +59,20 @@ function generateId() {
   return maxId + 1
 }
 
-app.get('/', (req, res) => {
-  res.send('<h1>Hi group chat server</h1>');
-})
 
 app.get('/api/notes', (req, res) => {
   res.json(notes);
 })
+
+io.on('connection', (socket) => {
+  console.log('a user connected with id ' + socket.id);
+  socket.on('message', (data) => {
+    console.log(data)
+  })
+  socket.on('disconnect', () => {
+    console.log('user gone')
+  })
+});
 
 app.get('/api/notes/:id', (req, res) => {
   let noteId = req.params.id;
@@ -74,12 +88,12 @@ app.post('/api/notes', (req, res) => {
     userId: body.userId
   }
 
-  if(notes.length > 100) {
+  if (notes.length > 100) {
     notes = notes.slice(1).concat(newNote)
   } else {
     notes = notes.concat(newNote);
   }
-  
+
   res.json(newNote);
 })
 
@@ -88,16 +102,16 @@ app.put('/api/notes/:id', (req, res) => {
   let body = req.body;
 
   let note = notes.find(note => note.id === noteId && note.userId == body.userId);
-  if(note) {
+  if (note) {
     note.content = body.content;
     res.json(note)
   } else {
     res.status(401).end()
   }
-
 })
 
+
 const PORT = process.env.PORT || 3002;
-app.listen(PORT, () => {
+http.listen(PORT, () => {
   console.log(`Running on port ${PORT}`);
 })
