@@ -13,7 +13,6 @@ app.use(express.json());
 app.use(cors());
 
 
-
 let notes = [
   {
     id: 1,
@@ -67,12 +66,25 @@ app.get('/api/notes', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected with id ' + socket.id);
   socket.on('message', (data) => {
-    console.log(data)
+    console.log(data);
+    let newNote = {
+      id: generateId(),
+      content: data.content,
+      userId: data.userId
+    }
+    if (notes.length > 100) {
+      notes = notes.slice(1).concat(newNote)
+    } else {
+      notes = notes.concat(newNote);
+    }
+    io.emit('messageResponse', newNote);
   })
   socket.on('disconnect', () => {
     console.log('user gone')
   })
 });
+
+
 
 app.get('/api/notes/:id', (req, res) => {
   let noteId = req.params.id;
@@ -80,22 +92,6 @@ app.get('/api/notes/:id', (req, res) => {
   res.json(note)
 })
 
-app.post('/api/notes', (req, res) => {
-  let body = req.body;
-  let newNote = {
-    id: generateId(),
-    content: body.content,
-    userId: body.userId
-  }
-
-  if (notes.length > 100) {
-    notes = notes.slice(1).concat(newNote)
-  } else {
-    notes = notes.concat(newNote);
-  }
-
-  res.json(newNote);
-})
 
 app.put('/api/notes/:id', (req, res) => {
   let noteId = +req.params.id;
