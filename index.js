@@ -1,9 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
+const Note = require('./models/note')
 const http = require('http').Server(app);
 const io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:3000"
+    origin: "http://localhost:3001"
   }
 });
 const cors = require('cors');
@@ -60,25 +62,27 @@ function generateId() {
 
 
 app.get('/api/notes', (req, res) => {
-  res.json(notes);
+  Note.find({}).then(notes => {
+    res.json(notes)
+  })
 })
 
 io.on('connection', (socket) => {
   console.log('a user connected with id ' + socket.id);
-  
+
   socket.on('message', (data) => {
     console.log(data);
-    let newNote = {
+
+    let newNote = new Note ({
       id: generateId(),
       content: data.content,
-      userId: data.userId
-    }
-    if (notes.length > 100) {
-      notes = notes.slice(1).concat(newNote)
-    } else {
-      notes = notes.concat(newNote);
-    }
-    io.emit('messageResponse', newNote);
+      userId: data.userId,
+    });
+
+    newNote.save().then(() => {
+      io.emit('messageResponse', newNote);
+  })
+    
   })
 
   socket.on('delete', () => {
@@ -113,7 +117,7 @@ app.put('/api/notes/:id', (req, res) => {
 })
 
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT;
 http.listen(PORT, () => {
   console.log(`Running on port ${PORT}`);
 })
