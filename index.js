@@ -65,6 +65,7 @@ app.get('/api/notes', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('a user connected with id ' + socket.id);
+  
   socket.on('message', (data) => {
     console.log(data);
     let newNote = {
@@ -79,6 +80,11 @@ io.on('connection', (socket) => {
     }
     io.emit('messageResponse', newNote);
   })
+
+  socket.on('delete', () => {
+    io.emit('messageDelete', notes)
+  })
+
   socket.on('disconnect', () => {
     console.log('user gone')
   })
