@@ -15,13 +15,13 @@ mongoose.connect(url)
 
 
 const noteSchema = new mongoose.Schema({
-  id: Number,
   content: String,
   userId: Number,
 })
 
 noteSchema.set('toJSON', {
   transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
     delete returnedObject._id
     delete returnedObject.__v
   }

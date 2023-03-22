@@ -74,19 +74,17 @@ io.on('connection', (socket) => {
     console.log(data);
 
     let newNote = new Note ({
-      id: generateId(),
       content: data.content,
       userId: data.userId,
     });
 
     newNote.save().then(() => {
       io.emit('messageResponse', newNote);
-  })
-    
+    })
   })
 
-  socket.on('delete', () => {
-    io.emit('messageDelete', notes)
+  socket.on('delete', (data) => {
+    io.emit('messageDelete', data)
   })
 
   socket.on('disconnect', () => {
@@ -98,22 +96,20 @@ io.on('connection', (socket) => {
 
 app.get('/api/notes/:id', (req, res) => {
   let noteId = req.params.id;
-  let note = notes.find(note => note.id == noteId);
-  res.json(note)
+  Note.findById(noteId).then(note => res.json(note))
 })
 
 
 app.put('/api/notes/:id', (req, res) => {
-  let noteId = +req.params.id;
+  let noteId = req.params.id;
   let body = req.body;
 
-  let note = notes.find(note => note.id === noteId && note.userId == body.userId);
-  if (note) {
-    note.content = body.content;
-    res.json(note)
-  } else {
-    res.status(401).end()
+  let editNote = {
+    content: body.content
   }
+
+  Note.findByIdAndUpdate(noteId, editNote, {new: true})
+    .then(resNote => res.json(resNote))
 })
 
 
